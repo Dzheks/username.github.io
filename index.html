@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>NovaShop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body style="margin:0;font-family:Arial;background:#0f0f0f;color:white">
+
+<div style="padding:16px">
+  <h2>🛍 NovaShop</h2>
+
+  <div style="background:#1c1c1c;border-radius:12px;padding:16px;margin-bottom:16px">
+    <h3>PS Plus Deluxe</h3>
+    <p>12 месяцев</p>
+    <b>4500 ₽</b><br><br>
+    <button onclick="addToCart()" style="padding:12px;width:100%;border:none;border-radius:10px;background:#2979ff;color:white">
+      Добавить в корзину
+    </button>
+  </div>
+
+  <button onclick="openCart()" style="padding:12px;width:100%;border:none;border-radius:10px;background:#00c853;color:white">
+    🛒 Корзина
+  </button>
+</div>
+
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.expand();
+  let cart = [];
+
+  function addToCart() {
+    cart.push("PS Plus Deluxe");
+    tg.showAlert("Товар добавлен");
+  }
+
+  function openCart() {
+    tg.showPopup({
+      title: "Корзина",
+      message: "Товаров: " + cart.length,
+      buttons: [{ type: "ok", text: "Закрыть" }]
+    });
+  }
+</script>
+
+</body>
+</html>
