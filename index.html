@@ -11,37 +11,74 @@
 <div style="padding:16px">
   <h2>🛍 NovaShop</h2>
 
-  <div style="background:#1c1c1c;border-radius:12px;padding:16px;margin-bottom:16px">
-    <h3>PS Plus Deluxe</h3>
-    <p>12 месяцев</p>
-    <b>4500 ₽</b><br><br>
-    <button onclick="addToCart()" style="padding:12px;width:100%;border:none;border-radius:10px;background:#2979ff;color:white">
-      Добавить в корзину
-    </button>
-  </div>
+  <div id="catalog"></div>
 
-  <button onclick="openCart()" style="padding:12px;width:100%;border:none;border-radius:10px;background:#00c853;color:white">
+  <button onclick="openCart()" style="margin-top:20px;padding:14px;width:100%;border:none;border-radius:12px;background:#00c853;color:white;font-size:16px">
     🛒 Корзина
   </button>
 </div>
 
 <script>
-  const tg = window.Telegram.WebApp;
-  tg.expand();
-  let cart = [];
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-  function addToCart() {
-    cart.push("PS Plus Deluxe");
-    tg.showAlert("Товар добавлен");
+const products = [
+  { id: 1, name: "PS Plus Essential", price: 2500 },
+  { id: 2, name: "PS Plus Extra", price: 3500 },
+  { id: 3, name: "PS Plus Deluxe", price: 4500 },
+  { id: 4, name: "Steam Wallet 1000₽", price: 1000 },
+  { id: 5, name: "Steam Wallet 3000₽", price: 3000 },
+  { id: 6, name: "Xbox Game Pass", price: 2000 }
+];
+
+let cart = [];
+
+const catalog = document.getElementById("catalog");
+
+products.forEach(p => {
+  const card = document.createElement("div");
+  card.style = "background:#1c1c1c;border-radius:12px;padding:16px;margin-bottom:16px";
+
+  card.innerHTML = `
+    <h3>${p.name}</h3>
+    <b>${p.price} ₽</b><br><br>
+    <button style="padding:12px;width:100%;border:none;border-radius:10px;background:#2979ff;color:white"
+      onclick="addToCart(${p.id})">
+      Добавить в корзину
+    </button>
+  `;
+
+  catalog.appendChild(card);
+});
+
+function addToCart(id) {
+  const product = products.find(p => p.id === id);
+  cart.push(product);
+  tg.showAlert(product.name + " добавлен");
+}
+
+function openCart() {
+  if (cart.length === 0) {
+    tg.showAlert("Корзина пустая");
+    return;
   }
 
-  function openCart() {
-    tg.showPopup({
-      title: "Корзина",
-      message: "Товаров: " + cart.length,
-      buttons: [{ type: "ok", text: "Закрыть" }]
-    });
-  }
+  let text = "";
+  let total = 0;
+
+  cart.forEach(i => {
+    text += "• " + i.name + " — " + i.price + " ₽\n";
+    total += i.price;
+  });
+
+  text += "\nИтого: " + total + " ₽";
+
+  tg.showPopup({
+    title: "Корзина",
+    message: text,
+    buttons: [{ type: "ok", text: "Закрыть" }]
+  });
+}
 </script>
 
 </body>
