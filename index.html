@@ -1,84 +1,246 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>NovaShop</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaShop</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+:root {
+  --bg:#0d0f12;
+  --card:#16191d;
+  --text:#fff;
+  --muted:#a0a0a0;
+  --blue:#2b8eff;
+  --green:#00d977;
+  --radius:18px;
+}
+
+*{box-sizing:border-box;font-family:system-ui;color:var(--text)}
+body{margin:0;background:var(--bg);padding:16px;padding-bottom:90px}
+
+header{text-align:center;font-size:1.6rem;font-weight:600;margin-bottom:16px}
+
+.categories{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.category-btn{
+  background:var(--card);border:none;border-radius:999px;
+  padding:8px 14px;color:var(--muted);font-weight:600
+}
+.category-btn.active{background:var(--blue);color:#fff}
+
+.catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  overflow:hidden;display:flex;flex-direction:column
+}
+.card img{width:100%;height:130px;object-fit:cover}
+.card-content{padding:12px;flex:1;display:flex;flex-direction:column;justify-content:space-between}
+
+.btn{
+  border:none;border-radius:var(--radius);
+  padding:10px;font-weight:700;font-size:.95rem
+}
+.btn-blue{background:var(--blue)}
+.btn-green{background:var(--green);color:#000}
+.btn-red{background:#ff5555}
+
+.footer{
+  position:fixed;bottom:0;left:0;width:100%;
+  background:#141619;display:flex;justify-content:space-around;
+  padding:10px 0
+}
+.nav-btn{background:none;border:none;color:var(--muted);font-weight:600}
+.nav-btn.active{color:var(--green)}
+
+.screen{display:none;flex-direction:column;min-height:100vh}
+.screen.active{display:flex}
+
+.cart-item{
+  background:var(--card);border-radius:var(--radius);
+  padding:12px;display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:10px
+}
+
+.profile-card{
+  background:var(--card);border-radius:var(--radius);
+  padding:16px;text-align:center;margin-bottom:16px
+}
+</style>
 </head>
-<body style="margin:0;font-family:Arial;background:#0f0f0f;color:white">
 
-<div style="padding:16px">
-  <h2>🛍 NovaShop</h2>
+<body>
 
-  <div id="catalog"></div>
+<!-- КАТАЛОГ -->
+<div class="screen active" id="catalogScreen">
+<header>🛍 NovaShop</header>
 
-  <button onclick="openCart()" style="margin-top:20px;padding:14px;width:100%;border:none;border-radius:12px;background:#00c853;color:white;font-size:16px">
-    🛒 Корзина
-  </button>
+<div class="categories" id="categories">
+<button class="category-btn active" data-cat="all">Все</button>
+<button class="category-btn" data-cat="PlayStation">PlayStation</button>
+<button class="category-btn" data-cat="Steam">Steam</button>
+<button class="category-btn" data-cat="Xbox">Xbox</button>
+</div>
+
+<div class="catalog" id="catalog"></div>
+</div>
+
+<!-- КОРЗИНА -->
+<div class="screen" id="cartScreen">
+<header>🛒 Корзина</header>
+<div id="cartItems"></div>
+<div id="cartTotal" style="font-weight:700;text-align:right;margin:12px 0">Итого: 0 ₽</div>
+<button class="btn btn-green" id="goPay">💳 Оформить заказ</button>
+<button class="btn btn-red" onclick="clearCart()">Очистить</button>
+</div>
+
+<!-- ОФОРМЛЕНИЕ -->
+<div class="screen" id="checkoutScreen">
+<header>💳 Оплата</header>
+<div class="profile-card">
+<p>Оплата цифровой услуги</p>
+<p>💳 Карта: <b>2202 0000 0000 1234</b></p>
+<p>👤 Получатель: Ivan I.</p>
+</div>
+<button class="btn btn-green" id="confirmPay">Я оплатил</button>
+</div>
+
+<!-- ПРОФИЛЬ -->
+<div class="screen" id="profileScreen">
+<header>👤 Профиль</header>
+<div class="profile-card">
+<h3 id="username">Гость</h3>
+<p style="color:var(--muted)">История заказов</p>
+</div>
+<div id="orders"></div>
+</div>
+
+<!-- НАВИГАЦИЯ -->
+<div class="footer">
+<button class="nav-btn active" data-screen="catalogScreen">🏠 Магазин</button>
+<button class="nav-btn" data-screen="cartScreen">🛒 Корзина (<span id="cartCount">0</span>)</button>
+<button class="nav-btn" data-screen="profileScreen">👤 Профиль</button>
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.expand();
+const tg = window.Telegram.WebApp; tg.expand();
 
 const products = [
-  { id: 1, name: "PS Plus Essential", price: 2500 },
-  { id: 2, name: "PS Plus Extra", price: 3500 },
-  { id: 3, name: "PS Plus Deluxe", price: 4500 },
-  { id: 4, name: "Steam Wallet 1000₽", price: 1000 },
-  { id: 5, name: "Steam Wallet 3000₽", price: 3000 },
-  { id: 6, name: "Xbox Game Pass", price: 2000 }
+{id:1,cat:"PlayStation",name:"PS Plus Essential",price:2500,img:"https://i.imgur.com/DXrGv1g.jpg"},
+{id:2,cat:"PlayStation",name:"PS Plus Extra",price:3500,img:"https://i.imgur.com/XO1VgRQ.jpg"},
+{id:3,cat:"PlayStation",name:"PS Plus Deluxe",price:4500,img:"https://i.imgur.com/n0fxZgP.jpg"},
+{id:4,cat:"Steam",name:"Steam Wallet 1000₽",price:1000,img:"https://i.imgur.com/zP8Q6Do.jpg"},
+{id:5,cat:"Steam",name:"Steam Wallet 3000₽",price:3000,img:"https://i.imgur.com/3HZYwOe.jpg"},
+{id:6,cat:"Xbox",cat2:"Xbox",name:"Xbox Game Pass",price:2000,img:"https://i.imgur.com/Xb1Elnx.jpg"},
 ];
 
-let cart = [];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let orders = JSON.parse(localStorage.getItem("orders")) || [];
+let currentCat="all";
 
-const catalog = document.getElementById("catalog");
+const catalog=document.getElementById("catalog");
+const cartItems=document.getElementById("cartItems");
+const cartTotal=document.getElementById("cartTotal");
+const cartCount=document.getElementById("cartCount");
+const ordersEl=document.getElementById("orders");
 
-products.forEach(p => {
-  const card = document.createElement("div");
-  card.style = "background:#1c1c1c;border-radius:12px;padding:16px;margin-bottom:16px";
+document.getElementById("username").textContent =
+tg.initDataUnsafe?.user?.username ? "@"+tg.initDataUnsafe.user.username : "Гость";
 
-  card.innerHTML = `
-    <h3>${p.name}</h3>
-    <b>${p.price} ₽</b><br><br>
-    <button style="padding:12px;width:100%;border:none;border-radius:10px;background:#2979ff;color:white"
-      onclick="addToCart(${p.id})">
-      Добавить в корзину
-    </button>
-  `;
+function renderCatalog(){
+catalog.innerHTML="";
+products.filter(p=>currentCat==="all"||p.cat===currentCat).forEach(p=>{
+catalog.innerHTML+=`
+<div class="card">
+<img src="${p.img}">
+<div class="card-content">
+<h4>${p.name}</h4>
+<b>${p.price} ₽</b>
+<button class="btn btn-blue" onclick="addToCart(${p.id})">Добавить</button>
+</div></div>`;
+});
+}
 
-  catalog.appendChild(card);
+function addToCart(id){
+const item=cart.find(i=>i.id===id);
+item?item.qty++:cart.push({id,qty:1});
+save(); renderCart(); tg.showAlert("Добавлено");
+}
+
+function renderCart(){
+cartItems.innerHTML="";
+let total=0,count=0;
+cart.forEach(i=>{
+const p=products.find(pr=>pr.id===i.id);
+total+=p.price*i.qty; count+=i.qty;
+cartItems.innerHTML+=`
+<div class="cart-item">
+<span>${p.name}</span>
+<div>
+<button onclick="changeQty(${i.id},-1)">−</button>
+<b>${i.qty}</b>
+<button onclick="changeQty(${i.id},1)">+</button>
+</div>
+</div>`;
+});
+cartTotal.textContent=`Итого: ${total} ₽`;
+cartCount.textContent=count;
+save();
+}
+
+function changeQty(id,d){
+const i=cart.find(x=>x.id===id);
+i.qty+=d; if(i.qty<=0) cart=cart.filter(x=>x.id!==id);
+renderCart();
+}
+
+function clearCart(){cart=[];renderCart();}
+
+document.getElementById("goPay").onclick=()=>switchScreen("checkoutScreen");
+
+document.getElementById("confirmPay").onclick=()=>{
+const items=cart.map(i=>{
+const p=products.find(pr=>pr.id===i.id);
+return `${p.name} x${i.qty}`;
+});
+const total=cart.reduce((s,i)=>s+products.find(p=>p.id===i.id).price*i.qty,0);
+const order={items,total,date:new Date().toLocaleString()};
+orders.push(order); localStorage.setItem("orders",JSON.stringify(orders));
+tg.sendData(JSON.stringify(order));
+cart=[]; renderCart(); renderOrders();
+tg.showAlert("Заказ отправлен"); switchScreen("catalogScreen");
+};
+
+function renderOrders(){
+ordersEl.innerHTML="";
+orders.slice().reverse().forEach(o=>{
+ordersEl.innerHTML+=`
+<div class="profile-card">
+<b>${o.date}</b>
+<p>${o.items.join(", ")}</p>
+<p>Сумма: ${o.total} ₽</p>
+</div>`;
+});
+}
+
+function save(){localStorage.setItem("cart",JSON.stringify(cart));}
+
+function switchScreen(id){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+document.querySelectorAll(".nav-btn").forEach(b=>{
+b.classList.toggle("active",b.dataset.screen===id);
+});
+if(id==="profileScreen") renderOrders();
+}
+
+document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>switchScreen(b.dataset.screen));
+document.querySelectorAll(".category-btn").forEach(b=>b.onclick=()=>{
+document.querySelectorAll(".category-btn").forEach(x=>x.classList.remove("active"));
+b.classList.add("active"); currentCat=b.dataset.cat; renderCatalog();
 });
 
-function addToCart(id) {
-  const product = products.find(p => p.id === id);
-  cart.push(product);
-  tg.showAlert(product.name + " добавлен");
-}
-
-function openCart() {
-  if (cart.length === 0) {
-    tg.showAlert("Корзина пустая");
-    return;
-  }
-
-  let text = "";
-  let total = 0;
-
-  cart.forEach(i => {
-    text += "• " + i.name + " — " + i.price + " ₽\n";
-    total += i.price;
-  });
-
-  text += "\nИтого: " + total + " ₽";
-
-  tg.showPopup({
-    title: "Корзина",
-    message: text,
-    buttons: [{ type: "ok", text: "Закрыть" }]
-  });
-}
+renderCatalog(); renderCart(); renderOrders();
 </script>
 
 </body>
