@@ -3,92 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GamePass Store</title>
+  <title>NovaShop</title>
+
   <style>
     :root {
-      --bg: #f9fafc;
-      --card: #ffffff;
-      --text: #111;
-      --muted: #666;
-      --accent: #3390ec;
-      --accent-green: #00c86f;
+      --bg: #0e0f13;
+      --card: #171a1f;
+      --text: #ffffff;
+      --muted: #a0a0a0;
+      --accent: #3b82f6;
+      --accent-green: #22c55e;
       --radius: 18px;
-      --shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: "Inter", system-ui, sans-serif;
+      font-family: Inter, system-ui, sans-serif;
       color: var(--text);
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       background: var(--bg);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      overflow-x: hidden;
+      padding-bottom: 90px;
     }
 
     header {
       text-align: center;
       font-size: 1.6rem;
-      font-weight: 600;
-      margin: 18px 0;
-      letter-spacing: -0.3px;
+      font-weight: 700;
+      margin: 20px 0;
     }
 
-    /* === ЭКРАНЫ === */
-    .screen {
-      display: none;
-      flex-direction: column;
-      min-height: 100vh;
-      padding: 0 16px 90px;
-      animation: fadeIn 0.4s ease;
-    }
-
-    .screen.active { display: flex; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* === КАТЕГОРИИ === */
+    /* ===== КАТЕГОРИИ ===== */
     .categories {
       display: flex;
+      gap: 10px;
       justify-content: center;
-      gap: 8px;
-      margin-bottom: 20px;
       flex-wrap: wrap;
+      margin-bottom: 20px;
     }
 
     .category-btn {
-      background: var(--card);
-      border: 1px solid #ddd;
+      padding: 8px 16px;
       border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 0.9rem;
+      background: var(--card);
+      border: none;
       color: var(--muted);
       cursor: pointer;
-      transition: all 0.25s ease;
-      box-shadow: var(--shadow);
     }
 
     .category-btn.active {
       background: var(--accent);
       color: #fff;
-      border-color: var(--accent);
     }
 
-    /* === КАТАЛОГ === */
+    /* ===== КАТАЛОГ ===== */
     .catalog {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 16px;
+      padding: 0 16px;
     }
 
     .card {
@@ -98,218 +75,192 @@
       box-shadow: var(--shadow);
       display: flex;
       flex-direction: column;
-      transform: translateY(10px);
-      opacity: 0;
-      animation: slideUp 0.4s ease forwards;
-    }
-
-    @keyframes slideUp {
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .card img {
       width: 100%;
       height: 120px;
       object-fit: cover;
-      border-bottom: 1px solid #eee;
     }
 
     .card-content {
       padding: 12px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       gap: 6px;
     }
 
     .card h3 {
       font-size: 1rem;
-      font-weight: 600;
     }
 
-    .card p {
-      font-size: 0.9rem;
+    .price {
       color: var(--muted);
+      font-size: 0.9rem;
     }
 
     .btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
+      margin-top: 6px;
       padding: 8px 0;
+      border-radius: var(--radius);
+      border: none;
+      background: var(--accent);
       font-weight: 600;
-      font-size: 0.9rem;
       cursor: pointer;
-      transition: all 0.25s ease;
     }
 
-    .btn:hover {
-      transform: scale(1.03);
-      box-shadow: 0 4px 10px rgba(51,144,236,0.3);
-    }
-
-    /* === КОРЗИНА === */
-    .cart-items {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      flex-grow: 1;
-      margin-bottom: 20px;
-    }
+    /* ===== КОРЗИНА ===== */
+    .screen { display: none; }
+    .screen.active { display: block; }
 
     .cart-item {
       background: var(--card);
+      margin: 10px 16px;
+      padding: 12px;
       border-radius: var(--radius);
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      box-shadow: var(--shadow);
     }
 
     .cart-total {
       text-align: right;
-      font-weight: 600;
-      font-size: 1rem;
-      margin-bottom: 10px;
+      padding: 16px;
+      font-weight: 700;
     }
 
-    .btn-clear {
-      background: #f56565;
-    }
-
-    .btn-pay {
-      background: var(--accent-green);
-      color: #fff;
-    }
-
-    /* === ПРОФИЛЬ === */
-    .profile-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 20px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .profile-card h2 {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .profile-card p {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .orders {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .order-item {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 12px;
-      box-shadow: var(--shadow);
-    }
-
-    .order-item small { color: var(--muted); }
-
-    /* === НАВИГАЦИЯ === */
-    .footer-nav {
+    /* ===== НАВИГАЦИЯ ===== */
+    .nav {
       position: fixed;
       bottom: 0;
-      left: 0;
       width: 100%;
-      background: #fff;
-      border-top: 1px solid #eee;
+      background: #0b0c10;
       display: flex;
       justify-content: space-around;
       padding: 10px 0;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      border-top: 1px solid #222;
     }
 
-    .nav-btn {
+    .nav button {
       background: none;
       border: none;
       color: var(--muted);
-      font-size: 0.9rem;
-      cursor: pointer;
       font-weight: 600;
-      transition: color 0.3s ease;
     }
 
-    .nav-btn.active { color: var(--accent); }
-
-    #cart-count {
-      background: var(--accent-green);
-      color: #fff;
-      border-radius: 50%;
-      padding: 2px 6px;
-      font-size: 0.75rem;
-      margin-left: 4px;
+    .nav button.active {
+      color: var(--accent-green);
     }
   </style>
 </head>
+
 <body>
-  <!-- === ЭКРАН КАТАЛОГА === -->
-  <div class="screen active" id="catalogScreen">
-    <header>🎮 GamePass Store</header>
-    <div class="categories" id="categories">
-      <button class="category-btn active" data-category="all">Все</button>
-      <button class="category-btn" data-category="PlayStation">PlayStation</button>
-      <button class="category-btn" data-category="Steam">Steam</button>
-      <button class="category-btn" data-category="Xbox">Xbox</button>
-    </div>
-    <div class="catalog" id="catalog"></div>
+
+<header>✨ NovaShop</header>
+
+<!-- ===== КАТАЛОГ ===== -->
+<div id="catalogScreen" class="screen active">
+  <div class="categories">
+    <button class="category-btn active" data-cat="all">Все</button>
+    <button class="category-btn" data-cat="PlayStation">PlayStation</button>
+    <button class="category-btn" data-cat="Steam">Steam</button>
+    <button class="category-btn" data-cat="Xbox">Xbox</button>
   </div>
 
-  <!-- === ЭКРАН КОРЗИНЫ === -->
-  <div class="screen" id="cartScreen">
-    <header>🛒 Корзина</header>
-    <div class="cart-items" id="cartItems"></div>
-    <div class="cart-total" id="cartTotal">Итого: 0₽</div>
-    <button class="btn btn-pay" id="pay">💳 Оплатить</button>
-    <button class="btn btn-clear" id="clearCart">🗑 Очистить</button>
-  </div>
+  <div class="catalog" id="catalog"></div>
+</div>
 
-  <!-- === ЭКРАН ПРОФИЛЯ === -->
-  <div class="screen" id="profileScreen">
-    <header>👤 Профиль</header>
-    <div class="profile-card">
-      <h2 id="username">@username</h2>
-      <p>Ваш Telegram аккаунт</p>
-    </div>
-    <h3 style="margin-bottom:8px;">📦 История заказов</h3>
-    <div class="orders" id="ordersList"></div>
-  </div>
+<!-- ===== КОРЗИНА ===== -->
+<div id="cartScreen" class="screen">
+  <header>🛒 Корзина</header>
+  <div id="cartItems"></div>
+  <div class="cart-total" id="total">Итого: 0₽</div>
+</div>
 
-  <!-- === НАВИГАЦИЯ === -->
-  <div class="footer-nav">
-    <button class="nav-btn active" data-screen="catalogScreen">🏠 Магазин</button>
-    <button class="nav-btn" data-screen="cartScreen">🛒 Корзина <span id="cart-count">0</span></button>
-    <button class="nav-btn" data-screen="profileScreen">👤 Профиль</button>
-  </div>
+<!-- ===== ПРОФИЛЬ ===== -->
+<div id="profileScreen" class="screen">
+  <header>👤 Профиль</header>
+  <p style="text-align:center;color:#aaa;">История заказов скоро</p>
+</div>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+<!-- ===== НАВИГАЦИЯ ===== -->
+<div class="nav">
+  <button class="active" data-screen="catalogScreen">Магазин</button>
+  <button data-screen="cartScreen">Корзина (<span id="count">0</span>)</button>
+  <button data-screen="profileScreen">Профиль</button>
+</div>
 
-    const products = [
-      {id: 1, category: "PlayStation", name: "PS Plus Essential", price: 499, image: "https://chatgpt.com/backend-api/estuary/content?id=file_000000006b0c720995f31182b207241d&ts=490534&p=fs&cid=1&sig=148af152090bd91afe100e9f3f32cb0920a921e4cbd2b34fbbf533bae9690787&v=0"},
-      {id: 2, category: "PlayStation", name: "PS Plus Extra", price: 799, image: "https://chatgpt.com/backend-api/estuary/content?id=file_000000001e98720785e7f5a7e5659ca2&ts=490534&p=fs&cid=1&sig=c6e5dd491e73d1a6e5e6baae6ff9f6c70d4dd04785a3434d609f47c9d63a4495&v=0"},
-      {id: 3, category: "PlayStation", name: "PS Plus Deluxe", price: 1099, image: "https://chatgpt.com/backend-api/estuary/content?id=file_0000000015cc71fabbf6f0cd89a2d97a&ts=490534&p=fs&cid=1&sig=8f373abbc61ae403fda5dc3b1866f8d16c7861bc34da6e65f3b20368bfb531f5&v=0"},
-      {id: 4, category: "Steam", name: "Steam Wallet 1000₽", price: 1000, image: "https://chatgpt.com/backend-api/estuary/content?id=file_00000000c18871faa59d70f31f459375&ts=490534&p=fs&cid=1&sig=b87d3a0f3ce2414b1962d1474680f261515a0e31e0d30ef3da6ef0a432255809&v=0"},
-      {id: 5, category: "Steam", name: "Steam Wallet 3000₽", price: 3000, image: "https://chatgpt.com/backend-api/estuary/content?id=file_00000000865471fab6162c745c1a9623&ts=490534&p=fs&cid=1&sig=28535ae2a0d02262cd7491f391e7e7f8ab23ae51fbcb52865dd8b631c5956fad&v=0"},
-      {id: 6, category: "Xbox", name: "Xbox Game Pass", price: 899, image: "https://chatgpt.com/backend-api/estuary/content?id=file_00000000eaa87207b007992c8baf8aa3&ts=490534&p=fs&cid=1&sig=10f661803275f91a8d7343d7b73093da742d470b2f80886430828338ceb0154a&v=0"}
-    ];
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.expand();
 
-    // (остальная логика остаётся как в предыдущей версии — корзина, профиль, история заказов)
-  </script>
+  const products = [
+    {id:1, cat:"PlayStation", name:"PS Plus Essential", price:499, img:"images/ps-essential.png"},
+    {id:2, cat:"PlayStation", name:"PS Plus Extra", price:799, img:"images/ps-extra.png"},
+    {id:3, cat:"PlayStation", name:"PS Plus Deluxe", price:1099, img:"images/ps-deluxe.png"},
+    {id:4, cat:"Steam", name:"Steam Wallet 1000₽", price:1000, img:"images/steam-1000.png"},
+    {id:5, cat:"Steam", name:"Steam Wallet 3000₽", price:3000, img:"images/steam-3000.png"},
+    {id:6, cat:"Xbox", name:"Xbox Game Pass", price:899, img:"images/xbox-pass.png"}
+  ];
+
+  const catalog = document.getElementById("catalog");
+  const cartItems = document.getElementById("cartItems");
+  const totalEl = document.getElementById("total");
+  const countEl = document.getElementById("count");
+
+  let cart = [];
+
+  function renderCatalog(cat="all") {
+    catalog.innerHTML = "";
+    products.filter(p => cat==="all" || p.cat===cat).forEach(p => {
+      catalog.innerHTML += `
+        <div class="card">
+          <img src="${p.img}">
+          <div class="card-content">
+            <h3>${p.name}</h3>
+            <div class="price">${p.price}₽</div>
+            <button class="btn" onclick="add(${p.id})">Добавить</button>
+          </div>
+        </div>`;
+    });
+  }
+
+  function add(id) {
+    cart.push(id);
+    renderCart();
+    tg.showAlert("Товар добавлен ✅");
+  }
+
+  function renderCart() {
+    cartItems.innerHTML = "";
+    let sum = 0;
+    cart.forEach(id => {
+      const p = products.find(x=>x.id===id);
+      sum += p.price;
+      cartItems.innerHTML += `<div class="cart-item"><span>${p.name}</span><span>${p.price}₽</span></div>`;
+    });
+    totalEl.textContent = "Итого: " + sum + "₽";
+    countEl.textContent = cart.length;
+  }
+
+  document.querySelectorAll(".category-btn").forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll(".category-btn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      renderCatalog(b.dataset.cat);
+    };
+  });
+
+  document.querySelectorAll(".nav button").forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+      document.getElementById(b.dataset.screen).classList.add("active");
+    };
+  });
+
+  renderCatalog();
+</script>
+
 </body>
 </html>
