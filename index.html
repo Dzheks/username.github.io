@@ -1,91 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>NovaShop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+:root{
+ --accent:#22c55e;
+ --bg1:#0f172a;
+ --bg2:#020617;
+}
+
+body{
+ min-height:100vh;
+ background:radial-gradient(circle at top,var(--bg1),var(--bg2));
+ color:#fff;
+ overflow:hidden;
+}
+
+.screen{
+ position:absolute;
+ inset:0;
+ padding:20px 20px 90px;
+ display:none;
+}
+.screen.active{display:block}
+
+header{text-align:center;margin-bottom:25px}
+header h1{font-size:32px}
+
+.catalog{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+ gap:20px;
+ max-width:1000px;
+ margin:auto;
+}
+
+.card{
+ background:rgba(255,255,255,.07);
+ border-radius:18px;
+ overflow:hidden;
+ backdrop-filter:blur(14px);
+ transition:.25s;
+ cursor:pointer;
+}
+.card:hover{transform:translateY(-6px)}
+.card img{width:100%;height:140px;object-fit:cover}
+.card-body{padding:14px}
+
+.buy{
+ width:100%;
+ padding:11px;
+ border:none;
+ border-radius:12px;
+ background:var(--accent);
+ font-weight:600;
+ cursor:pointer;
+}
+
+.nav{
+ position:fixed;
+ bottom:0;
+ left:0;
+ right:0;
+ background:#020617;
+ display:flex;
+ justify-content:space-around;
+ padding:12px 0;
+}
+.nav button{
+ background:none;border:none;color:#94a3b8;font-weight:600;
+}
+.nav .active{color:var(--accent)}
+
+.cart-item{
+ background:rgba(255,255,255,.07);
+ border-radius:14px;
+ padding:12px;
+ margin-bottom:10px;
+ display:flex;
+ justify-content:space-between;
+}
+
+.hero{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.7);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ z-index:10;
+}
+.hero-card{
+ width:90%;
+ max-width:360px;
+ background:#020617;
+ border-radius:20px;
+ overflow:hidden;
+}
+</style>
+</head>
+<body>
+
+<!-- ЭКРАНЫ -->
+<div class="screen active" id="shop">
+<header><h1>NovaShop</h1></header>
+<div class="catalog" id="catalog"></div>
+</div>
+
+<div class="screen" id="cart">
+<header><h1>Корзина</h1></header>
+<div id="cartList"></div>
+<h3 id="total"></h3>
+<button class="buy" onclick="pay()">Оплатить</button>
+</div>
+
+<div class="screen" id="profile">
+<header><h1>Профиль</h1></header>
+<p id="user"></p>
+<div id="orders"></div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+<button class="active" onclick="openScreen('shop',this)">Магазин</button>
+<button onclick="openScreen('cart',this)">Корзина</button>
+<button onclick="openScreen('profile',this)">Профиль</button>
+</div>
+
 <script>
-  // === SAFE TELEGRAM INIT ===
-  const tg = window.Telegram?.WebApp || {
-    expand: () => {},
-    showAlert: (t) => alert(t)
-  };
-  tg.expand();
+/* ===== SAFE TELEGRAM ===== */
+const tg = window.Telegram?.WebApp || {
+  expand(){},
+  showAlert: alert,
+  sendData: console.log,
+  HapticFeedback: null,
+  themeParams: {}
+};
 
-  // === PRODUCTS ===
-  const products = [
-    {id:1, cat:"PlayStation", name:"PS Plus Essential", price:499, img:"images/ps-essential.png"},
-    {id:2, cat:"PlayStation", name:"PS Plus Extra", price:799, img:"images/ps-extra.png"},
-    {id:3, cat:"PlayStation", name:"PS Plus Deluxe", price:1099, img:"images/ps-deluxe.png"},
-    {id:4, cat:"Steam", name:"Steam Wallet 1000₽", price:1000, img:"images/steam-1000.png"},
-    {id:5, cat:"Steam", name:"Steam Wallet 3000₽", price:3000, img:"images/steam-3000.png"},
-    {id:6, cat:"Xbox", name:"Xbox Game Pass", price:899, img:"images/xbox-pass.png"}
-  ];
+tg.expand();
 
-  const catalog = document.getElementById("catalog");
-  const cartItems = document.getElementById("cartItems");
-  const totalEl = document.getElementById("total");
-  const countEl = document.getElementById("count");
+/* ===== THEME ===== */
+if(tg.themeParams?.button_color){
+ document.documentElement.style.setProperty("--accent",tg.themeParams.button_color);
+}
 
-  let cart = [];
+/* ===== DATA ===== */
+const products=[
+ {id:1,name:"PS Plus Essential",price:499,img:"images/ps-essential.png"},
+ {id:2,name:"PS Plus Extra",price:799,img:"images/ps-extra.png"},
+ {id:3,name:"PS Plus Deluxe",price:1099,img:"images/ps-deluxe.png"},
+ {id:4,name:"Steam 1000 ₽",price:1000,img:"images/steam-1000.png"},
+ {id:5,name:"Steam 3000 ₽",price:3000,img:"images/steam-3000.png"},
+ {id:6,name:"Xbox Game Pass",price:899,img:"images/xbox-pass.png"}
+];
 
-  // === CATALOG ===
-  function renderCatalog(category = "all") {
-    catalog.innerHTML = "";
-    products
-      .filter(p => category === "all" || p.cat === category)
-      .forEach(p => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="${p.img}" onerror="this.src='https://via.placeholder.com/300x180?text=NovaShop'">
-          <div class="card-content">
-            <h3>${p.name}</h3>
-            <div class="price">${p.price}₽</div>
-            <button class="btn">Добавить</button>
-          </div>
-        `;
-        card.querySelector("button").onclick = () => addToCart(p.id);
-        catalog.appendChild(card);
-      });
-  }
+let cart = JSON.parse(localStorage.getItem("cart")||"[]");
+let orders = JSON.parse(localStorage.getItem("orders")||"[]");
 
-  // === CART ===
-  function addToCart(id) {
-    cart.push(id);
-    renderCart();
-    tg.showAlert("✅ Товар добавлен");
-  }
+/* ===== CATALOG ===== */
+const catalog=document.getElementById("catalog");
+products.forEach(p=>{
+ const c=document.createElement("div");
+ c.className="card";
+ c.innerHTML=`
+ <img src="${p.img}">
+ <div class="card-body">
+ <h3>${p.name}</h3>
+ <div>${p.price} ₽</div>
+ <button class="buy">Купить</button>
+ </div>`;
+ c.querySelector("button").onclick=e=>{
+  e.stopPropagation();
+  cart.push(p);
+  localStorage.setItem("cart",JSON.stringify(cart));
+  tg.showAlert("Добавлено в корзину");
+ };
+ catalog.appendChild(c);
+});
 
-  function renderCart() {
-    cartItems.innerHTML = "";
-    let sum = 0;
-    cart.forEach(id => {
-      const p = products.find(x => x.id === id);
-      sum += p.price;
-      cartItems.innerHTML += `
-        <div class="cart-item">
-          <span>${p.name}</span>
-          <span>${p.price}₽</span>
-        </div>`;
-    });
-    totalEl.textContent = `Итого: ${sum}₽`;
-    countEl.textContent = cart.length;
-  }
+/* ===== SCREENS ===== */
+function openScreen(id,btn){
+ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
 
-  // === CATEGORIES ===
-  document.querySelectorAll(".category-btn").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll(".category-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      renderCatalog(btn.dataset.cat);
-    };
-  });
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
 
-  // === NAVIGATION ===
-  document.querySelectorAll(".nav button").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-      document.getElementById(btn.dataset.screen).classList.add("active");
-    };
-  });
+ if(id==="cart") renderCart();
+ if(id==="profile") renderOrders();
+}
 
-  // === INIT ===
-  renderCatalog();
+/* ===== CART ===== */
+function renderCart(){
+ const l=document.getElementById("cartList");
+ l.innerHTML="";
+ let sum=0;
+ cart.forEach(p=>{
+  sum+=p.price;
+  l.innerHTML+=`<div class="cart-item"><span>${p.name}</span><b>${p.price} ₽</b></div>`;
+ });
+ document.getElementById("total").innerText="Итого: "+sum+" ₽";
+}
+
+function pay(){
+ if(!cart.length) return;
+ const order={
+  id:Date.now(),
+  items:cart,
+  total:cart.reduce((s,p)=>s+p.price,0),
+  status:"paid",
+  date:new Date().toLocaleString()
+ };
+ orders.push(order);
+ localStorage.setItem("orders",JSON.stringify(orders));
+ tg.sendData(JSON.stringify(order));
+ cart=[];
+ localStorage.setItem("cart","[]");
+ tg.showAlert("Заказ принят ✅");
+ renderCart();
+}
+
+/* ===== PROFILE ===== */
+document.getElementById("user").innerText =
+ tg.initDataUnsafe?.user?.username ? "@"+tg.initDataUnsafe.user.username : "Гость";
+
+function renderOrders(){
+ const o=document.getElementById("orders");
+ o.innerHTML="";
+ orders.slice().reverse().forEach(or=>{
+  o.innerHTML+=`
+   <div class="cart-item">
+    <span>${or.date}</span>
+    <b>${or.total} ₽</b>
+   </div>`;
+ });
+}
 </script>
+</body>
+</html>
