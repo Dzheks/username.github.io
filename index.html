@@ -20,16 +20,20 @@ body{
  overflow:hidden;
 }
 
+/* ===== SCREENS ===== */
 .screen{
  position:absolute;
  inset:0;
  padding:20px 20px 90px;
- display:none;
+ transform:translateX(100%);
+ transition:transform .35s cubic-bezier(.4,0,.2,1);
 }
-.screen.active{display:block}
+.screen.active{transform:translateX(0)}
+.screen.left{transform:translateX(-100%)}
 
-header{text-align:center;margin-bottom:25px}
-header h1{font-size:32px}
+/* ===== UI ===== */
+header{text-align:center;margin-bottom:20px}
+header h1{font-size:30px}
 
 .catalog{
  display:grid;
@@ -60,6 +64,10 @@ header h1{font-size:32px}
  font-weight:600;
  cursor:pointer;
 }
+.buy.crypto{
+ background:#0ea5e9;
+ margin-top:8px;
+}
 
 .nav{
  position:fixed;
@@ -84,28 +92,11 @@ header h1{font-size:32px}
  display:flex;
  justify-content:space-between;
 }
-
-.hero{
- position:fixed;
- inset:0;
- background:rgba(0,0,0,.7);
- display:flex;
- align-items:center;
- justify-content:center;
- z-index:10;
-}
-.hero-card{
- width:90%;
- max-width:360px;
- background:#020617;
- border-radius:20px;
- overflow:hidden;
-}
 </style>
 </head>
 <body>
 
-<!-- ЭКРАНЫ -->
+<!-- ===== SCREENS ===== -->
 <div class="screen active" id="shop">
 <header><h1>NovaShop</h1></header>
 <div class="catalog" id="catalog"></div>
@@ -115,7 +106,7 @@ header h1{font-size:32px}
 <header><h1>Корзина</h1></header>
 <div id="cartList"></div>
 <h3 id="total"></h3>
-<button class="buy" onclick="pay()">Оплатить</button>
+<button class="buy" onclick="payCrypto()">🪙 Оплатить криптой</button>
 </div>
 
 <div class="screen" id="profile">
@@ -124,42 +115,38 @@ header h1{font-size:32px}
 <div id="orders"></div>
 </div>
 
-<!-- NAV -->
+<!-- ===== NAV ===== -->
 <div class="nav">
-<button class="active" onclick="openScreen('shop',this)">Магазин</button>
-<button onclick="openScreen('cart',this)">Корзина</button>
-<button onclick="openScreen('profile',this)">Профиль</button>
+<button class="active" onclick="go('shop',this)">Магазин</button>
+<button onclick="go('cart',this)">Корзина</button>
+<button onclick="go('profile',this)">Профиль</button>
 </div>
 
 <script>
 /* ===== SAFE TELEGRAM ===== */
 const tg = window.Telegram?.WebApp || {
-  expand(){},
-  showAlert: alert,
-  sendData: console.log,
-  HapticFeedback: null,
-  themeParams: {}
+ expand(){},
+ sendData: console.log,
+ showAlert: alert,
+ themeParams: {}
 };
 
 tg.expand();
 
-/* ===== THEME ===== */
 if(tg.themeParams?.button_color){
  document.documentElement.style.setProperty("--accent",tg.themeParams.button_color);
 }
 
-/* ===== DATA ===== */
+/* ===== DATA (обычно грузится из data.json) ===== */
 const products=[
- {id:1,name:"PS Plus Essential",price:499,img:"images/ps-essential.png"},
- {id:2,name:"PS Plus Extra",price:799,img:"images/ps-extra.png"},
- {id:3,name:"PS Plus Deluxe",price:1099,img:"images/ps-deluxe.png"},
- {id:4,name:"Steam 1000 ₽",price:1000,img:"images/steam-1000.png"},
- {id:5,name:"Steam 3000 ₽",price:3000,img:"images/steam-3000.png"},
- {id:6,name:"Xbox Game Pass",price:899,img:"images/xbox-pass.png"}
+ {id:1,name:"PS Plus Essential",price:499},
+ {id:2,name:"PS Plus Extra",price:799},
+ {id:3,name:"Steam Wallet 1000 ₽",price:1000}
 ];
 
 let cart = JSON.parse(localStorage.getItem("cart")||"[]");
 let orders = JSON.parse(localStorage.getItem("orders")||"[]");
+let current="shop";
 
 /* ===== CATALOG ===== */
 const catalog=document.getElementById("catalog");
@@ -167,13 +154,12 @@ products.forEach(p=>{
  const c=document.createElement("div");
  c.className="card";
  c.innerHTML=`
- <img src="${p.img}">
  <div class="card-body">
  <h3>${p.name}</h3>
  <div>${p.price} ₽</div>
- <button class="buy">Купить</button>
+ <button class="buy">В корзину</button>
  </div>`;
- c.querySelector("button").onclick=e=>{
+ c.querySelector(".buy").onclick=e=>{
   e.stopPropagation();
   cart.push(p);
   localStorage.setItem("cart",JSON.stringify(cart));
@@ -181,18 +167,6 @@ products.forEach(p=>{
  };
  catalog.appendChild(c);
 });
-
-/* ===== SCREENS ===== */
-function openScreen(id,btn){
- document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
- document.getElementById(id).classList.add("active");
-
- document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
- btn.classList.add("active");
-
- if(id==="cart") renderCart();
- if(id==="profile") renderOrders();
-}
 
 /* ===== CART ===== */
 function renderCart(){
@@ -206,32 +180,31 @@ function renderCart(){
  document.getElementById("total").innerText="Итого: "+sum+" ₽";
 }
 
-function pay(){
+/* ===== CRYPTO PAYMENT ===== */
+function payCrypto(){
  if(!cart.length) return;
- const order={
-  id:Date.now(),
-  items:cart,
-  total:cart.reduce((s,p)=>s+p.price,0),
-  status:"paid",
-  date:new Date().toLocaleString()
- };
- orders.push(order);
- localStorage.setItem("orders",JSON.stringify(orders));
- tg.sendData(JSON.stringify(order));
- cart=[];
- localStorage.setItem("cart","[]");
- tg.showAlert("Заказ принят ✅");
- renderCart();
+
+ const total = cart.reduce((s,p)=>s+p.price,0);
+
+ tg.sendData(JSON.stringify({
+  action: "crypto_invoice",
+  total: total,
+  items: cart
+ }));
+
+ tg.showAlert("🪙 Счёт отправлен.\nПроверь чат с ботом.");
 }
 
 /* ===== PROFILE ===== */
 document.getElementById("user").innerText =
- tg.initDataUnsafe?.user?.username ? "@"+tg.initDataUnsafe.user.username : "Гость";
+ tg.initDataUnsafe?.user?.username
+ ? "@"+tg.initDataUnsafe.user.username
+ : "Гость";
 
 function renderOrders(){
  const o=document.getElementById("orders");
  o.innerHTML="";
- orders.slice().reverse().forEach(or=>{
+ orders.forEach(or=>{
   o.innerHTML+=`
    <div class="cart-item">
     <span>${or.date}</span>
@@ -239,6 +212,34 @@ function renderOrders(){
    </div>`;
  });
 }
+
+/* ===== NAVIGATION + SLIDE ===== */
+function go(id,btn){
+ const cur=document.getElementById(current);
+ const next=document.getElementById(id);
+ cur.classList.remove("active");
+ cur.classList.add("left");
+ next.classList.add("active");
+ current=id;
+
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
+
+ if(id==="cart")renderCart();
+ if(id==="profile")renderOrders();
+}
+
+/* ===== SWIPE ===== */
+let sx=0;
+document.addEventListener("touchstart",e=>sx=e.touches[0].clientX);
+document.addEventListener("touchend",e=>{
+ let dx=e.changedTouches[0].clientX-sx;
+ if(Math.abs(dx)<80)return;
+ const order=["shop","cart","profile"];
+ let i=order.indexOf(current);
+ if(dx<0 && i<order.length-1) go(order[i+1],document.querySelectorAll(".nav button")[i+1]);
+ if(dx>0 && i>0) go(order[i-1],document.querySelectorAll(".nav button")[i-1]);
+});
 </script>
 </body>
 </html>
